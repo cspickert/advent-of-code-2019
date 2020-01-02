@@ -13,6 +13,9 @@ class Ref(object):
     def value(self, value):
         self.data[self.position] = value
 
+    def __repr__(self):
+        return f'Ref({self.value}@{self.position})'
+
 class Immediate(object):
     def __init__(self, value):
         self._value = value
@@ -24,6 +27,9 @@ class Immediate(object):
     @value.setter
     def value(self, value):
         self._value = value
+
+    def __repr__(self):
+        return f'Immediate({self.value})'
 
 class HaltException(Exception):
     pass
@@ -38,7 +44,7 @@ class Operation(object):
 
     @classmethod
     def from_opcode(cls, opcode):
-        return cls.operations[opcode]
+        return cls.operations[opcode % 100]
 
     def __init__(self, opcode, num_args):
         self.opcode = opcode
@@ -62,6 +68,23 @@ class Multiply(Operation):
 
     def execute(self, arg0, arg1, dest):
         dest.value = arg0.value * arg1.value
+
+@Operation.register
+class Input(Operation):
+    def __init__(self):
+        super().__init__(3, 1)
+
+    def execute(self, dest):
+        print('Please enter a value:',)
+        dest.value = int(input())
+
+@Operation.register
+class Output(Operation):
+    def __init__(self):
+        super().__init__(4, 1)
+
+    def execute(self, arg0):
+        print('Output:', arg0.value)
 
 @Operation.register
 class Halt(Operation):
@@ -111,11 +134,12 @@ class Instruction(object):
     def size(self):
         return 1 + len(self.args)
 
+    def __repr__(self):
+        return f'{self.operation.__class__.__name__}({self.args})'
+
 class Computer(object):
-    def run(self, data, noun=12, verb=2):
+    def run(self, data):
         data = data.copy()
-        data[1] = noun
-        data[2] = verb
         index = 0
         while index < len(data):
             instruction = Instruction(data, index)
