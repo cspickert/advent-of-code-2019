@@ -34,6 +34,10 @@ class Immediate(object):
 class HaltException(Exception):
     pass
 
+class JumpException(Exception):
+    def __init__(self, index):
+        self.index = index
+
 class Operation(object):
     operations = {}
 
@@ -85,6 +89,40 @@ class Output(Operation):
 
     def execute(self, arg0):
         print('Output:', arg0.value)
+
+@Operation.register
+class JumpIfTrue(Operation):
+    def __init__(self):
+        super().__init__(5, 2)
+
+    def execute(self, arg0, arg1):
+        if arg0.value != 0:
+            raise JumpException(arg1.value)
+
+@Operation.register
+class JumpIfFalse(Operation):
+    def __init__(self):
+        super().__init__(6, 2)
+
+    def execute(self, arg0, arg1):
+        if arg0.value == 0:
+            raise JumpException(arg1.value)
+
+@Operation.register
+class TestLessThan(Operation):
+    def __init__(self):
+        super().__init__(7, 3)
+
+    def execute(self, arg0, arg1, dest):
+        dest.value = 1 if arg0.value < arg1.value else 0
+
+@Operation.register
+class TestEqualTo(Operation):
+    def __init__(self):
+        super().__init__(8, 3)
+
+    def execute(self, arg0, arg1, dest):
+        dest.value = 1 if arg0.value == arg1.value else 0
 
 @Operation.register
 class Halt(Operation):
@@ -147,5 +185,8 @@ class Computer(object):
                 instruction.execute()
             except HaltException:
                 break
+            except JumpException as e:
+                index = e.index
+                continue
             index += instruction.size
         return data[0]
