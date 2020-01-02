@@ -1,3 +1,5 @@
+import enum
+
 class Ref(object):
     def __init__(self, data, position):
         self.data = data
@@ -10,6 +12,18 @@ class Ref(object):
     @value.setter
     def value(self, value):
         self.data[self.position] = value
+
+class Immediate(object):
+    def __init__(self, value):
+        self._value = value
+
+    @property
+    def value(self):
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        self._value = value
 
 class HaltException(Exception):
     pass
@@ -57,6 +71,46 @@ class Halt(Operation):
     def execute(self, *args):
         raise HaltException()
 
+class ParameterMode(enum.Enum):
+    POSITIONAL = 0
+    IMMEDIATE = 1
+
+    @classmethod
+    def unpack_modes(cls, value):
+        modes = []
+        value //= 100
+        while value > 0:
+            mode = ParameterMode(value % 10)
+            modes.append(mode)
+            value //= 10
+        return modes
+
+class Instruction(object):
+    def __init__(self, data, index):
+        self.operation = Operation.from_opcode(data[index])
+        self.parameter_modes = ParameterMode.unpack_modes(data[index])
+        self.args = []
+        for i in range(self.operation.num_args):
+            parameter_mode = self.parameter_mode_at(i)
+            value = data[index + 1 + i]
+            if parameter_mode == ParameterMode.POSITIONAL:
+                arg = Ref(data, value)
+            elif parameter_mode == ParameterMode.IMMEDIATE:
+                arg = Immediate(value)
+            self.args.append(arg)
+
+    def parameter_mode_at(self, i):
+        if i < len(self.parameter_modes):
+            return self.parameter_modes[i]
+        return ParameterMode.POSITIONAL
+
+    def execute(self):
+        self.operation.execute(*self.args)
+
+    @property
+    def size(self):
+        return 1 + len(self.args)
+
 class Computer(object):
     def run(self, data, noun=12, verb=2):
         data = data.copy()
@@ -64,14 +118,10 @@ class Computer(object):
         data[2] = verb
         index = 0
         while index < len(data):
-            operation = Operation.from_opcode(data[index])
-            index += 1
-            args = map(
-                lambda position: Ref(data, position),
-                data[index:index + operation.num_args])
+            instruction = Instruction(data, index)
             try:
-                operation.execute(*args)
+                instruction.execute()
             except HaltException:
                 break
-            index += operation.num_args
+            index += instruction.size
         return data[0]
