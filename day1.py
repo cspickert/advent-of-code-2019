@@ -1,4 +1,3 @@
-import sys
 import math
 
 def fuel(mass):
@@ -13,8 +12,9 @@ def fuel(mass):
     return result + fuel(result)
 
 def main():
+    from input import day1
     fuel_total = 0
-    for line in sys.stdin:
+    for line in day1.splitlines():
         mass = int(line)
         fuel_total += fuel(mass)
     print(fuel_total)

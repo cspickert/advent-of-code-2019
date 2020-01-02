@@ -28,9 +28,9 @@ def main(commands_list):
     print(wire_length(part2, wire1, wire2))
 
 if __name__ == '__main__':
-    import sys
+    from input import day3
     commands_list = []
-    for line in sys.stdin:
+    for line in day3.splitlines():
         commands = line.split(',')
         commands_list.append(commands)
     main(commands_list)
