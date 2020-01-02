@@ -1,4 +1,5 @@
 import enum
+import sys
 
 class Ref(object):
     def __init__(self, data, position):
@@ -54,7 +55,7 @@ class Operation(object):
         self.opcode = opcode
         self.num_args = num_args
 
-    def execute(self, *args):
+    def execute(self, computer, *args):
         pass
 
 @Operation.register
@@ -62,7 +63,7 @@ class Add(Operation):
     def __init__(self):
         super().__init__(1, 3)
 
-    def execute(self, arg0, arg1, dest):
+    def execute(self, computer, arg0, arg1, dest):
         dest.value = arg0.value + arg1.value
 
 @Operation.register
@@ -70,7 +71,7 @@ class Multiply(Operation):
     def __init__(self):
         super().__init__(2, 3)
 
-    def execute(self, arg0, arg1, dest):
+    def execute(self, computer, arg0, arg1, dest):
         dest.value = arg0.value * arg1.value
 
 @Operation.register
@@ -78,24 +79,23 @@ class Input(Operation):
     def __init__(self):
         super().__init__(3, 1)
 
-    def execute(self, dest):
-        print('Please enter a value:',)
-        dest.value = int(input())
+    def execute(self, computer, dest):
+        dest.value = int(computer.io.stdin.readline())
 
 @Operation.register
 class Output(Operation):
     def __init__(self):
         super().__init__(4, 1)
 
-    def execute(self, arg0):
-        print('Output:', arg0.value)
+    def execute(self, computer, arg0):
+        print(arg0.value, file=computer.io.stdout)
 
 @Operation.register
 class JumpIfTrue(Operation):
     def __init__(self):
         super().__init__(5, 2)
 
-    def execute(self, arg0, arg1):
+    def execute(self, computer, arg0, arg1):
         if arg0.value != 0:
             raise JumpException(arg1.value)
 
@@ -104,7 +104,7 @@ class JumpIfFalse(Operation):
     def __init__(self):
         super().__init__(6, 2)
 
-    def execute(self, arg0, arg1):
+    def execute(self, computer, arg0, arg1):
         if arg0.value == 0:
             raise JumpException(arg1.value)
 
@@ -113,7 +113,7 @@ class TestLessThan(Operation):
     def __init__(self):
         super().__init__(7, 3)
 
-    def execute(self, arg0, arg1, dest):
+    def execute(self, computer, arg0, arg1, dest):
         dest.value = 1 if arg0.value < arg1.value else 0
 
 @Operation.register
@@ -121,7 +121,7 @@ class TestEqualTo(Operation):
     def __init__(self):
         super().__init__(8, 3)
 
-    def execute(self, arg0, arg1, dest):
+    def execute(self, computer, arg0, arg1, dest):
         dest.value = 1 if arg0.value == arg1.value else 0
 
 @Operation.register
@@ -129,7 +129,7 @@ class Halt(Operation):
     def __init__(self):
         super().__init__(99, 0)
 
-    def execute(self, *args):
+    def execute(self, computer, *args):
         raise HaltException()
 
 class ParameterMode(enum.Enum):
@@ -165,8 +165,8 @@ class Instruction(object):
             return self.parameter_modes[i]
         return ParameterMode.POSITIONAL
 
-    def execute(self):
-        self.operation.execute(*self.args)
+    def execute(self, computer):
+        self.operation.execute(computer, *self.args)
 
     @property
     def size(self):
@@ -175,14 +175,22 @@ class Instruction(object):
     def __repr__(self):
         return f'{self.operation.__class__.__name__}({self.args})'
 
+class IO(object):
+    def __init__(self):
+        self.stdin = sys.stdin
+        self.stdout = sys.stdout
+
 class Computer(object):
+    def __init__(self):
+        self.io = IO()
+
     def run(self, data):
         data = data.copy()
         index = 0
         while index < len(data):
             instruction = Instruction(data, index)
             try:
-                instruction.execute()
+                instruction.execute(self)
             except HaltException:
                 break
             except JumpException as e:
