@@ -80,7 +80,7 @@ class Input(Operation):
         super().__init__(3, 1)
 
     def execute(self, computer, dest):
-        dest.value = int(computer.io.stdin.readline())
+        dest.value = computer.get_input()
 
 @Operation.register
 class Output(Operation):
@@ -88,7 +88,7 @@ class Output(Operation):
         super().__init__(4, 1)
 
     def execute(self, computer, arg0):
-        print(arg0.value, file=computer.io.stdout)
+        computer.output = arg0.value
 
 @Operation.register
 class JumpIfTrue(Operation):
@@ -175,14 +175,18 @@ class Instruction(object):
     def __repr__(self):
         return f'{self.operation.__class__.__name__}({self.args})'
 
-class IO(object):
-    def __init__(self):
-        self.stdin = sys.stdin
-        self.stdout = sys.stdout
-
 class Computer(object):
     def __init__(self):
-        self.io = IO()
+        self.inputs = []
+        self.output = None
+
+    def input(self, value):
+        self.inputs.insert(0, value)
+
+    def get_input(self):
+        if self.inputs:
+            return self.inputs.pop()
+        return int(sys.stdin.readline())
 
     def run(self, data):
         data = data.copy()
@@ -197,4 +201,6 @@ class Computer(object):
                 index = e.index
                 continue
             index += instruction.size
+        if self.output is not None:
+            return self.output
         return data[0]

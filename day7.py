@@ -10,11 +10,9 @@ def main(data):
         signal = 0
         for phase_setting in configuration:
             computer = Computer()
-            computer.io.stdin = io.StringIO(f'{phase_setting}\n{signal}\n')
-            computer.io.stdout = io.StringIO()
-            computer.run(data)
-            computer.io.stdout.seek(0)
-            signal = int(computer.io.stdout.read())
+            computer.input(phase_setting)
+            computer.input(signal)
+            signal = computer.run(data)
             best_signal = max(best_signal, signal)
     print(best_signal)
 
