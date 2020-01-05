@@ -12,9 +12,9 @@ def fuel(mass):
     return result + fuel(result)
 
 def main():
-    from input import day1
+    from input import day01
     fuel_total = 0
-    for line in day1.splitlines():
+    for line in day01.splitlines():
         mass = int(line)
         fuel_total += fuel(mass)
     print(fuel_total)

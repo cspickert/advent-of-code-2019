@@ -19,6 +19,6 @@ def main(data):
                 break
 
 if __name__ == '__main__':
-    from input import day2
-    data = list(map(int, day2.split(',')))
+    from input import day02
+    data = list(map(int, day02.split(',')))
     main(data)

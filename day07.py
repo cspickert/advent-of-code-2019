@@ -37,6 +37,6 @@ def part2(data):
     print(best_signal)
 
 if __name__ == '__main__':
-    from input import day7
-    data = list(map(int, day7.split(',')))
+    from input import day07
+    data = list(map(int, day07.split(',')))
     part2(data)

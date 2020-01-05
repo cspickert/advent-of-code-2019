@@ -24,8 +24,8 @@ def main(entries):
     print(you_path.index(common_body) + san_path.index(common_body))
 
 if __name__ == '__main__':
-    from input import day6
+    from input import day06
     entries = []
-    for line in day6.splitlines():
+    for line in day06.splitlines():
         entries.append(line.rstrip().split(')'))
     main(entries)

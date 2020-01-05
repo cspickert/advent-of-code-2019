@@ -41,6 +41,6 @@ def part2(data, width, height):
     print(image)
 
 if __name__ == '__main__':
-    from input import day8
-    data = list(map(int, day8))
+    from input import day08
+    data = list(map(int, day08))
     part2(data, 25, 6)
