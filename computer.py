@@ -2,9 +2,14 @@ import enum
 import sys
 
 class Ref(object):
-    def __init__(self, data, position):
+    def __init__(self, data, offset, base=0):
         self.data = data
-        self.position = position
+        self.offset = offset
+        self.base = base
+
+    @property
+    def position(self):
+        return self.base + self.offset
 
     @property
     def value(self):
@@ -15,7 +20,7 @@ class Ref(object):
         self.data[self.position] = value
 
     def __repr__(self):
-        return f'Ref({self.value}@{self.position})'
+        return f'Ref({self.value} @ {self.position} [{self.offset} + {self.base}])'
 
 class Immediate(object):
     def __init__(self, value):
@@ -122,6 +127,14 @@ class TestEqualTo(Operation):
         dest.value = 1 if arg0.value == arg1.value else 0
 
 @Operation.register
+class OffsetRelativeBase(Operation):
+    def __init__(self):
+        super().__init__(9, 1)
+
+    def execute(self, computer, arg0):
+        computer.relative_base += arg0.value
+
+@Operation.register
 class Halt(Operation):
     def __init__(self):
         super().__init__(99, 0)
@@ -132,6 +145,7 @@ class Halt(Operation):
 class ParameterMode(enum.Enum):
     POSITIONAL = 0
     IMMEDIATE = 1
+    RELATIVE = 2
 
     @classmethod
     def unpack_modes(cls, value):
@@ -144,7 +158,7 @@ class ParameterMode(enum.Enum):
         return modes
 
 class Instruction(object):
-    def __init__(self, data, index):
+    def __init__(self, data, index, relative_base=0):
         self.operation = Operation.from_opcode(data[index])
         self.parameter_modes = ParameterMode.unpack_modes(data[index])
         self.args = []
@@ -155,6 +169,8 @@ class Instruction(object):
                 arg = Ref(data, value)
             elif parameter_mode == ParameterMode.IMMEDIATE:
                 arg = Immediate(value)
+            elif parameter_mode == ParameterMode.RELATIVE:
+                arg = Ref(data, value, relative_base)
             self.args.append(arg)
 
     def parameter_mode_at(self, i):
@@ -174,11 +190,12 @@ class Instruction(object):
 
 class Computer(object):
     def __init__(self, data):
-        self.data = data.copy()
+        self.data = data.copy() + [0] * 10000
         self.data_index = 0
         self.inputs = []
         self.output = None
         self.is_halted = False
+        self.relative_base = 0
 
     def input(self, value):
         self.inputs.insert(0, value)
@@ -192,7 +209,8 @@ class Computer(object):
     def run_partial(self):
         self.output = None
         while not self.is_halted:
-            instruction = Instruction(self.data, self.data_index)
+            instruction = Instruction(
+                self.data, self.data_index, self.relative_base)
             try:
                 instruction.execute(self)
                 self.data_index += instruction.size
