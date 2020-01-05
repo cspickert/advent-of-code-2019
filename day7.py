@@ -9,10 +9,10 @@ def main(data):
     for configuration in itertools.permutations(phase_settings):
         signal = 0
         for phase_setting in configuration:
-            computer = Computer()
+            computer = Computer(data)
             computer.input(phase_setting)
             computer.input(signal)
-            signal = computer.run(data)
+            signal = computer.run()
             best_signal = max(best_signal, signal)
     print(best_signal)
 

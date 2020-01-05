@@ -1,8 +1,8 @@
 from computer import Computer
 
 def main(data):
-    computer = Computer()
-    result = computer.run(data)
+    computer = Computer(data)
+    result = computer.run()
     print(result)
 
 if __name__ == '__main__':

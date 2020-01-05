@@ -32,9 +32,6 @@ class Immediate(object):
     def __repr__(self):
         return f'Immediate({self.value})'
 
-class HaltException(Exception):
-    pass
-
 class JumpException(Exception):
     def __init__(self, index):
         self.index = index
@@ -130,7 +127,7 @@ class Halt(Operation):
         super().__init__(99, 0)
 
     def execute(self, computer, *args):
-        raise HaltException()
+        computer.is_halted = True
 
 class ParameterMode(enum.Enum):
     POSITIONAL = 0
@@ -176,9 +173,12 @@ class Instruction(object):
         return f'{self.operation.__class__.__name__}({self.args})'
 
 class Computer(object):
-    def __init__(self):
+    def __init__(self, data):
+        self.data = data.copy()
+        self.data_index = 0
         self.inputs = []
         self.output = None
+        self.is_halted = False
 
     def input(self, value):
         self.inputs.insert(0, value)
@@ -188,19 +188,26 @@ class Computer(object):
             return self.inputs.pop()
         return int(sys.stdin.readline())
 
-    def run(self, data):
-        data = data.copy()
-        index = 0
-        while index < len(data):
-            instruction = Instruction(data, index)
+    # Runs until the next output occurs or the program halts.
+    def run_partial(self):
+        self.output = None
+        while not self.is_halted:
+            instruction = Instruction(self.data, self.data_index)
             try:
                 instruction.execute(self)
-            except HaltException:
-                break
+                self.data_index += instruction.size
+                if self.output is not None:
+                    break
             except JumpException as e:
-                index = e.index
-                continue
-            index += instruction.size
-        if self.output is not None:
-            return self.output
-        return data[0]
+                self.data_index = e.index
+        return self.output
+
+    def run(self):
+        last_output = self.output
+        while not self.is_halted:
+            output = self.run_partial()
+            if output is not None:
+                last_output = output
+        if last_output is not None:
+            return last_output
+        return self.data[0]
