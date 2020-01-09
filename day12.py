@@ -1,39 +1,10 @@
 import itertools
-
-def gravity(self_value, other_value):
-    if self_value == other_value:
-        return 0
-    return 1 if self_value < other_value else -1
-
-class Vec(object):
-    def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
-
-    def __repr__(self):
-        return f'<x={self.x}, y={self.y}, z={self.z}>'
-
-    def __add__(self, other):
-        return Vec(self.x + other.x, self.y + other.y, self.z + other.z)
-
-    @property
-    def energy(self):
-        return abs(self.x) + abs(self.y) + abs(self.z)
-
-    def acceleration(self, other):
-        return Vec(
-            0 if self.x == other.x else 1 if self.x < other.x else -1,
-            0 if self.y == other.y else 1 if self.y < other.y else -1,
-            0 if self.z == other.z else 1 if self.z < other.z else -1)
+import numpy as np
 
 class Moon(object):
     def __init__(self, x, y, z):
-        self.pos = Vec(x, y, z)
-        self.vel = Vec(0, 0, 0)
-
-    def __repr__(self):
-        return f'Moon(pos={self.pos}, vel={self.vel})'
+        self.pos = np.array([x, y, z])
+        self.vel = np.zeros(3, dtype=int)
 
     @classmethod
     def from_string(cls, string):
@@ -46,18 +17,20 @@ class Moon(object):
         return Moon(x, y, z)
 
     def apply_gravity(self, other):
-        self.vel += self.pos.acceleration(other.pos)
+        self.vel += np.where(
+            self.pos == other.pos, 0, np.where(
+                self.pos < other.pos, 1, -1))
 
     def apply_velocity(self):
         self.pos += self.vel
 
     @property
     def potential_energy(self):
-        return self.pos.energy
+        return np.abs(self.pos).sum()
 
     @property
     def kinetic_energy(self):
-        return self.vel.energy
+        return np.abs(self.vel).sum()
 
     @property
     def total_energy(self):
