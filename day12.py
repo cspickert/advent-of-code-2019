@@ -1,58 +1,41 @@
 import itertools
 import numpy as np
 
-class Moon(object):
-    def __init__(self, x, y, z):
-        self.pos = np.array([x, y, z])
-        self.vel = np.zeros(3, dtype=int)
-
-    @classmethod
-    def from_string(cls, string):
-        key_pairs = string.strip('<>').split(', ')
-        for key_pair in key_pairs:
-            key, value = key_pair.split('=')
-            if key == 'x': x = int(value)
-            if key == 'y': y = int(value)
-            if key == 'z': z = int(value)
-        return Moon(x, y, z)
-
-    def apply_gravity(self, other):
-        self.vel += np.where(
-            self.pos == other.pos, 0, np.where(
-                self.pos < other.pos, 1, -1))
-
-    def apply_velocity(self):
-        self.pos += self.vel
-
-    @property
-    def potential_energy(self):
-        return np.abs(self.pos).sum()
-
-    @property
-    def kinetic_energy(self):
-        return np.abs(self.vel).sum()
-
-    @property
-    def total_energy(self):
-        return self.potential_energy * self.kinetic_energy
-
-def step(data):
-    # Gravity
-    for moon1, moon2 in itertools.combinations(data, 2):
-        moon1.apply_gravity(moon2)
-        moon2.apply_gravity(moon1)
-    for moon in data:
-        moon.apply_velocity()
+def step(pos, vel):
+    tmp = pos.reshape(len(pos), 1)
+    vel += np.where(pos == tmp, 0, np.where(pos < tmp, -1, 1)).sum(1)
+    pos += vel
 
 def part1(data):
+    x = np.array([moon[0] for moon in data])
+    y = np.array([moon[1] for moon in data])
+    z = np.array([moon[2] for moon in data])
+    xv = np.zeros(4, dtype=int)
+    yv = np.zeros(4, dtype=int)
+    zv = np.zeros(4, dtype=int)
     for _ in range(1000):
-        step(data)
+        step(x, xv)
+        step(y, yv)
+        step(z, zv)
     total_energy = 0
-    for moon in data:
-        total_energy += moon.total_energy
+    for i in range(len(data)):
+        pos = np.array([x[i], y[i], z[i]])
+        vel = np.array([xv[i], yv[i], zv[i]])
+        pot = np.abs(pos).sum()
+        kin = np.abs(vel).sum()
+        total_energy += pot * kin
     print(total_energy)
+
+def part2(data):
+    pass
 
 if __name__ == '__main__':
     from input import day12
-    data = [Moon.from_string(line) for line in day12.splitlines()]
+    from parse import parse
+    data = []
+    for line in day12.splitlines():
+        r = parse('<x={x:d}, y={y:d}, z={z:d}>', line)
+        if r:
+            data.append((r['x'], r['y'], r['z']))
     part1(data)
+    # part2(data)
