@@ -1,10 +1,24 @@
 import numpy as np
 
+def step_axis(axis):
+    pos, vel = axis
+    tmp = pos.reshape(len(pos), 1)
+    vel += np.where(pos == tmp, 0, np.where(pos < tmp, -1, 1)).sum(1)
+    pos += vel
+
 def step(data):
-    for pos, vel in data.T:
-        tmp = pos.reshape(len(pos), 1)
-        vel += np.where(pos == tmp, 0, np.where(pos < tmp, -1, 1)).sum(1)
-        pos += vel
+    for axis in data.T:
+        step_axis(axis)
+
+def find_cycle_length(axis):
+    target = axis.copy()
+    count = 0
+    while True:
+        step_axis(axis)
+        count += 1
+        if (axis == target).all():
+            break
+    return count
 
 def part1(data):
     for _ in range(1000):
@@ -17,7 +31,9 @@ def part1(data):
     print(total_energy)
 
 def part2(data):
-    pass
+    cycle_lengths = [find_cycle_length(axis) for axis in data.T]
+    result = np.lcm.reduce(cycle_lengths)
+    print(result)
 
 def load_data():
     from input import day12
@@ -33,4 +49,4 @@ def load_data():
 if __name__ == '__main__':
     data = load_data()
     part1(data)
-    # part2(data)
+    part2(data)
