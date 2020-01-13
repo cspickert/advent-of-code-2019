@@ -196,6 +196,7 @@ class Computer(object):
         self.output = None
         self.is_halted = False
         self.relative_base = 0
+        self.get_next_input = None
 
     def input(self, value):
         self.inputs.insert(0, value)
@@ -203,6 +204,8 @@ class Computer(object):
     def get_input(self):
         if self.inputs:
             return self.inputs.pop()
+        if self.get_next_input:
+            return self.get_next_input()
         return int(sys.stdin.readline())
 
     # Runs until the next output occurs or the program halts.
