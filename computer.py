@@ -1,6 +1,7 @@
 import enum
 import sys
 
+
 class Ref(object):
     def __init__(self, data, offset, base=0):
         self.data = data
@@ -20,7 +21,8 @@ class Ref(object):
         self.data[self.position] = value
 
     def __repr__(self):
-        return f'Ref({self.value} @ {self.position} [{self.offset} + {self.base}])'
+        return f"Ref({self.value} @ {self.position} [{self.offset} + {self.base}])"
+
 
 class Immediate(object):
     def __init__(self, value):
@@ -35,11 +37,13 @@ class Immediate(object):
         self._value = value
 
     def __repr__(self):
-        return f'Immediate({self.value})'
+        return f"Immediate({self.value})"
+
 
 class JumpException(Exception):
     def __init__(self, index):
         self.index = index
+
 
 class Operation(object):
     operations = {}
@@ -60,6 +64,7 @@ class Operation(object):
     def execute(self, computer, *args):
         pass
 
+
 @Operation.register
 class Add(Operation):
     def __init__(self):
@@ -67,6 +72,7 @@ class Add(Operation):
 
     def execute(self, computer, arg0, arg1, dest):
         dest.value = arg0.value + arg1.value
+
 
 @Operation.register
 class Multiply(Operation):
@@ -76,6 +82,7 @@ class Multiply(Operation):
     def execute(self, computer, arg0, arg1, dest):
         dest.value = arg0.value * arg1.value
 
+
 @Operation.register
 class Input(Operation):
     def __init__(self):
@@ -84,6 +91,7 @@ class Input(Operation):
     def execute(self, computer, dest):
         dest.value = computer.get_input()
 
+
 @Operation.register
 class Output(Operation):
     def __init__(self):
@@ -91,6 +99,7 @@ class Output(Operation):
 
     def execute(self, computer, arg0):
         computer.output = arg0.value
+
 
 @Operation.register
 class JumpIfTrue(Operation):
@@ -101,6 +110,7 @@ class JumpIfTrue(Operation):
         if arg0.value != 0:
             raise JumpException(arg1.value)
 
+
 @Operation.register
 class JumpIfFalse(Operation):
     def __init__(self):
@@ -110,6 +120,7 @@ class JumpIfFalse(Operation):
         if arg0.value == 0:
             raise JumpException(arg1.value)
 
+
 @Operation.register
 class TestLessThan(Operation):
     def __init__(self):
@@ -117,6 +128,7 @@ class TestLessThan(Operation):
 
     def execute(self, computer, arg0, arg1, dest):
         dest.value = 1 if arg0.value < arg1.value else 0
+
 
 @Operation.register
 class TestEqualTo(Operation):
@@ -126,6 +138,7 @@ class TestEqualTo(Operation):
     def execute(self, computer, arg0, arg1, dest):
         dest.value = 1 if arg0.value == arg1.value else 0
 
+
 @Operation.register
 class OffsetRelativeBase(Operation):
     def __init__(self):
@@ -134,6 +147,7 @@ class OffsetRelativeBase(Operation):
     def execute(self, computer, arg0):
         computer.relative_base += arg0.value
 
+
 @Operation.register
 class Halt(Operation):
     def __init__(self):
@@ -141,6 +155,7 @@ class Halt(Operation):
 
     def execute(self, computer, *args):
         computer.is_halted = True
+
 
 class ParameterMode(enum.Enum):
     POSITIONAL = 0
@@ -156,6 +171,7 @@ class ParameterMode(enum.Enum):
             modes.append(mode)
             value //= 10
         return modes
+
 
 class Instruction(object):
     def __init__(self, data, index, relative_base=0):
@@ -186,7 +202,8 @@ class Instruction(object):
         return 1 + len(self.args)
 
     def __repr__(self):
-        return f'{self.operation.__class__.__name__}({self.args})'
+        return f"{self.operation.__class__.__name__}({self.args})"
+
 
 class Computer(object):
     def __init__(self, data):
@@ -212,8 +229,7 @@ class Computer(object):
     def run_partial(self):
         self.output = None
         while not self.is_halted:
-            instruction = Instruction(
-                self.data, self.data_index, self.relative_base)
+            instruction = Instruction(self.data, self.data_index, self.relative_base)
             try:
                 instruction.execute(self)
                 self.data_index += instruction.size
