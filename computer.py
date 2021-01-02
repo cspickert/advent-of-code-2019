@@ -215,6 +215,12 @@ class Computer(object):
         self.relative_base = 0
         self.get_next_input = None
 
+    def __iter__(self):
+        while not self.is_halted:
+            output = self.run_partial()
+            if output is not None:
+                yield output
+
     def input(self, value):
         self.inputs.insert(0, value)
 
