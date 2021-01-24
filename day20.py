@@ -59,8 +59,54 @@ def part1(grid):
                 heapq.heappush(queue, (steps + 1, (next_r, next_c), {*visited, (r, c)}))
 
 
+def part2(grid):
+    doors = dict(find_doors(grid))
+    start, end = find_start(doors), find_end(doors)
+
+    queue = [(0, (*start, 0), set())]
+    while queue:
+        steps, (r, c, level), visited = heapq.heappop(queue)
+
+        if (r, c) == end:
+            if level == 0:
+                print(steps)
+                return
+
+        if (r, c) != start and (r, c) in doors:
+            door, dlevel = doors[r, c]
+            next_pos = next(
+                (
+                    key
+                    for key, (value, _) in doors.items()
+                    if value == door and key != (r, c)
+                ),
+                None,
+            )
+            if not next_pos:
+                assert door in ("AA", "ZZ")
+                continue
+            next_r, next_c = next_pos
+            next_level = level + dlevel
+            if next_level < 0 or next_level > len(doors):
+                continue
+            if (next_r, next_c, next_level) not in visited:
+                heapq.heappush(
+                    queue, (steps + 1, (next_r, next_c, next_level), {(r, c, level)}),
+                )
+                continue
+
+        for dr, dc in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+            next_r, next_c = r + dr, c + dc
+            if grid[next_r][next_c] == "." and (next_r, next_c, level) not in visited:
+                heapq.heappush(
+                    queue,
+                    (steps + 1, (next_r, next_c, level), {*visited, (r, c, level)}),
+                )
+
+
 def main(grid):
     part1(grid)
+    part2(grid)
 
 
 if __name__ == "__main__":
