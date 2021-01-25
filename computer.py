@@ -224,6 +224,10 @@ class Computer(object):
     def input(self, value):
         self.inputs.insert(0, value)
 
+    def input_str(self, value):
+        for c in value:
+            self.input(ord(c))
+
     def get_input(self):
         if self.inputs:
             return self.inputs.pop()
